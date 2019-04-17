@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+
 // Update these with values suitable for your network.
 
 const char* ssid = "Lab124";
@@ -9,6 +10,7 @@ const char* password = "Lab124phys";
 const char* mqtt_server = "stag.track-debts.com";
 
 WiFiClient espClient;
+ESP8266WiFiClass wifi;
 PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
@@ -80,12 +82,22 @@ void reconnect() {
     }
   }
 }
+void regist() {
+  client.subscribe("esp");
+   String mac = wifi.macAddress();
+   String data = "[{\"macAddress\":\"";
+   data += mac;
+   data += "\",\"title\": \"esp\"}]"; // ok
+  client.publish("esp",data.c_str());
+  
+
+}
  void connect(){
 if (!client.connected()) {
     reconnect();
   }
   client.loop();
-
+  regist();
   long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
@@ -94,6 +106,7 @@ if (!client.connected()) {
     Serial.print("Publish message: ");
     Serial.println(msg);
     client.publish("esp", msg);
+    
   }
  
 
@@ -104,6 +117,7 @@ void setup() {
   Serial.begin(9600);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
+  
   client.setCallback(callback);
 }
 
