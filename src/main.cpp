@@ -5,8 +5,8 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "Lab124";
-const char* password = "Lab124phys";
+const char* ssid = "WR-Sydor5";
+const char* password = "IRENA1978";
 const char* mqtt_server = "stag.track-debts.com";
 
 WiFiClient espClient;
@@ -70,9 +70,9 @@ void reconnect() {
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("esp","2");
+      client.publish("esp/","2");
       // ... and resubscribe
-      client.subscribe("esp");
+      client.subscribe("esp/");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -83,12 +83,14 @@ void reconnect() {
   }
 }
 void regist() {
-  client.subscribe("esp");
+  
    String mac = wifi.macAddress();
-   String data = "[{\"macAddress\":\"";
+   String data = mac + "/registration";
+  /* String data = "[{\"macAddress\":\"";
    data += mac;
-   data += "\",\"title\": \"esp\"}]"; // ok
-  client.publish("esp",data.c_str());
+   data += "\",\"title\": \"esp\"}]"; // ok*/
+  client.publish("esp/",data.c_str());
+  Serial.println(client.subscribe("esp/"));
   
 
 }
@@ -97,17 +99,17 @@ if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  regist();
+  /*
   long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
     ++value;
-    snprintf (msg, 50, "2", value);
+    snprintf (msg, 50, wifi.macAddress().c_str(), value);
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish("esp", msg);
+    client.publish("esp/", msg);
     
-  }
+  }*/
  
 
  }
@@ -117,11 +119,16 @@ void setup() {
   Serial.begin(9600);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
-  
   client.setCallback(callback);
 }
-
+int i = 0;
 void loop() {
 
   connect();
+  while (i<3){
+    regist();
+    i++;
+  } 
+ 
+  
 }
