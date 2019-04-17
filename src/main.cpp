@@ -81,7 +81,20 @@ void reconnect() {
   }
 }
  void connect(){
+if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 
+  long now = millis();
+  if (now - lastMsg > 2000) {
+    lastMsg = now;
+    ++value;
+    snprintf (msg, 50, "2", value);
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    client.publish("esp", msg);
+  }
  
 
  }
@@ -96,18 +109,5 @@ void setup() {
 
 void loop() {
 
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-
-  long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    ++value;
-    snprintf (msg, 50, "2", value);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("esp", msg);
-  }
+  connect();
 }
