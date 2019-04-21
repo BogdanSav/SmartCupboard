@@ -12,8 +12,8 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "S16";
-const char* password = "12345678";
+const char* ssid = "WR-Sydor5";
+const char* password = "IRENA1978";
 const char* mqtt_server = "stag.track-debts.com";
 
 WiFiClient espClient;
@@ -78,9 +78,9 @@ void reconnect() {
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("esp/","2");
+     // client.publish("esp/","2");
       // ... and resubscribe
-      client.subscribe("esp/");
+      //client.subscribe("esp/");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -109,21 +109,19 @@ void read_card(){
     Serial.print(F("Card UID:"));
     dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
     Serial.println();
-   /* Serial.print(F("PICC type: "));
-    MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-    Serial.println(mfrc522.PICC_GetTypeName(piccType));*/
     mfrc522.PICC_HaltA();       // Halt PICC
     mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
 }
 void regist() {
   
    String mac = wifi.macAddress();
-   String data = mac + "/registration";
-  /* String data = "[{\"macAddress\":\"";
+   //String data1 = mac + "/registration";
+  String data = "[{\"macAddress\":\"";
    data += mac;
-   data += "\",\"title\": \"esp\"}]"; // ok*/
-  client.publish("esp/",data.c_str());
-  Serial.println(client.subscribe("esp/"));
+   data += "\",\"title\": \"rc522\"}]"; // ok*/
+   Serial.println(data);
+  client.publish("esp/12/registration",data.c_str());
+  Serial.println(client.subscribe("esp/token"));
   
 
 }
@@ -132,8 +130,8 @@ if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  /*
-  long now = millis();
+  
+  /*long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
     ++value;
@@ -151,7 +149,7 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(9600);
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
+  client.setServer(mqtt_server,1883);
   client.setCallback(callback);
    while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
     SPI.begin();                // Init SPI bus
@@ -161,12 +159,10 @@ void setup() {
 int i = 0;
 void loop() {
 
-//  connect();
+ connect();
   while (i<3){
     regist();
     i++;
   } 
   read_card();
- 
-  
 }
