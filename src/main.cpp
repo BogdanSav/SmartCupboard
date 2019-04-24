@@ -12,8 +12,8 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "S16";
-const char* password = "12345678";
+const char* ssid = "WR-Sydor5";
+const char* password = "IRENA1978";
 const char* mqtt_server = "stag.track-debts.com";
 
 WiFiClient espClient;
@@ -112,7 +112,7 @@ void regist() {
    data += mac;
    data += "\",\"title\": \"rc522\"}";
    Serial.println(data);
-   client.subscribe("esp/token"); 
+   Serial.println(client.subscribe("esp/token")); 
    client.publish("esp/12/registration",data.c_str());
 
 }
