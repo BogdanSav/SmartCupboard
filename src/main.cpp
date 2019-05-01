@@ -4,6 +4,9 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+#include <ArduinoJson.h>
+#include <EEPROM.h>
+
 #define RST_PIN         5           // Configurable, see typical pin layout above
 #define SS_PIN          4          // Configurable, see typical pin layout above
 
@@ -23,6 +26,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 long lastMsg = 0;
 char msg[50];
 int value = 0;
+uint addr = 0;
+char* uuid;
 
 void setup_wifi() {
 
@@ -51,9 +56,75 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
+  String JSONMessage;
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+      JSONMessage = (String)payload[i];
+
   }
+ 
+ // char JSONMessage[] = "{\"macAddress\":\"5G-67-NJ-L51\",\"uuid\":\"bfc8b00b-7de7-4ce0-8719-1d63d2773b04\",\"createdAt\":1556232469976,\"title\":\"Test #2\"}";
+  StaticJsonDocument <200> doc;
+
+  DeserializationError error = deserializeJson(doc, JSONMessage);
+
+  // Test if parsing succeeds.
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return;
+  }
+ String macad =doc["macAddress"];
+  String title =doc["title"];
+  String uud =doc["uuid"];
+
+  Serial.println(macad);
+  Serial.println(title);
+  Serial.println(uud);
+  
+
+
+   String mac = wifi.macAddress();
+	   String macAddress = doc["macAddress"];
+  if(mac == macAddress){
+    uuid == doc["uuid"];
+    Serial.println(uuid);
+    EEPROM.commit();
+
+  }
+  else
+  {
+    Serial.println("mac's is not equals");
+    Serial.println(mac);
+    Serial.println(macAddress);
+  }
+  
+
+ /* StaticJsonBuffer<300> JSONBuffer;
+  Object&  parsed= JSONBuffer.parseObject(JSONMessage);
+  if (!parsed.success()) { 
+    Serial.println("Parsing failed");
+    return; 
+  }
+  else {
+	  String mac = wifi.macAddress();
+	  const char * macAddress = parsed["macAddress"];
+	  if (macAddress == mac) {
+	 	 uuid = parsed["uuid"];
+	     
+		 
+		 // replace values in byte-array cache with modified data
+	     // no changes made to flash, all in local byte-array cache
+	     EEPROM.put(addr,data);
+
+	     // actually write the content of byte-array cache to
+	     // hardware flash.  flash write occurs if and only if one or more byte
+	     // in byte-array cache has been changed, but if so, ALL 512 bytes are 
+	     // written to flash
+	       
+		 Serial.println("uuid for this device - " + String(uuid));
+      }
+  }*/
+  
   Serial.println();
 
   // Switch on the LED if an 1 was received as first character
@@ -107,17 +178,26 @@ void read_card(){
     mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
 }*/
 void regist() {
-  String mac = wifi.macAddress();
-   String data = "{\"macAddress\":\"";
-   data += mac;
-   data += "\",\"title\": \"rc522\"}";
-   Serial.println(data);
-   Serial.println(client.subscribe("esp/token")); 
-   client.publish("esp/12/registration",data.c_str());
 
+     // read bytes (i.e. sizeof(data) from "EEPROM"),
+     // in reality, reads from byte-array cache
+     // cast bytes into structure called data
+
+   EEPROM.get(addr,uuid);
+   if (uuid == NULL) { // uuid isEmpty	
+   	 	String mac = wifi.macAddress();
+   		String data = "{\"macAddress\":\"";
+   		data += mac;
+   		data += "\",\"title\": \"rc522\"}";
+   		Serial.println(data);
+   		Serial.println(client.subscribe("esp/token")); 
+   		client.publish("esp/12/registration",data.c_str());
+  }
 }
- void connect(){
-if (!client.connected()) {
+
+void connect(){
+
+  if (!client.connected()) {
     reconnect();
   }
   client.loop();
@@ -140,6 +220,13 @@ void setup() {
   
   //pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
+  
+  // commit 512 bytes of ESP8266 flash (for "EEPROM" emulation)
+  // this step actually loads the content (512 bytes) of flash into 
+  // a 512-byte-array cache in RAM
+  EEPROM.begin(512);
+  
+  
   setup_wifi();
   client.setServer(mqtt_server,1883);
   client.setCallback(callback);
@@ -148,13 +235,35 @@ void setup() {
     mfrc522.PCD_Init();         // Init MFRC522 card
     Serial.println(F("Try the most used default keys to print block 0 of a MIFARE PICC."));
 }
+
 int i = 0;
+
 void loop() {
 
  connect();
-  while (i<3){
-    regist();
-    i++;
-  } 
-  //read_card();
+ regist();
+ //read_card();
+/* char JSONMessage[] = "{\"macAddress\":\"5G-67-NJ-L51\",\"uuid\":\"bfc8b00b-7de7-4ce0-8719-1d63d2773b04\",\"createdAt\":1556232469976,\"title\":\"Test #2\"}";
+  StaticJsonDocument <200> doc;
+
+  DeserializationError error = deserializeJson(doc, JSONMessage);
+
+  // Test if parsing succeeds.
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return;
+  }
+   String mac = wifi.macAddress();
+	  String macAddress = doc["macAddress"];
+  if(mac == macAddress){
+    uuid == doc["uuid"];
+
+  }
+  else
+  {
+    Serial.println("mac's is not equals");
+    Serial.println(mac);
+    Serial.println(macAddress);
+  }*/
 }
