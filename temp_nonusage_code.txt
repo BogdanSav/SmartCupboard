@@ -1,0 +1,79 @@
+/* StaticJsonBuffer<300> JSONBuffer;
+  Object&  parsed= JSONBuffer.parseObject(JSONMessage);
+  if (!parsed.success()) { 
+    Serial.println("Parsing failed");
+    return; 
+  }
+  else {
+	  String mac = wifi.macAddress();
+	  const char * macAddress = parsed["macAddress"];
+	  if (macAddress == mac) {
+	 	 uuid = parsed["uuid"];
+	     
+		 
+		 // replace values in byte-array cache with modified data
+	     // no changes made to flash, all in local byte-array cache
+	     EEPROM.put(addr,data);
+
+	     // actually write the content of byte-array cache to
+	     // hardware flash.  flash write occurs if and only if one or more byte
+	     // in byte-array cache has been changed, but if so, ALL 512 bytes are 
+	     // written to flash
+	       
+		 Serial.println("uuid for this device - " + String(uuid));
+      }
+  }*/
+/*void dump_byte_array(byte *buffer, byte bufferSize) {
+    for (byte i = 0; i < bufferSize; i++) {
+        Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+        Serial.print(buffer[i], HEX);
+    }
+}
+void read_card(){
+  if ( ! mfrc522.PICC_IsNewCardPresent())
+        return;
+
+    // Select one of the cards
+    if ( ! mfrc522.PICC_ReadCardSerial())
+        return;
+
+    // Show some details of the PICC (that is: the tag/card)
+    Serial.print(F("Card UID:"));
+    dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
+    Serial.println();
+    mfrc522.PICC_HaltA();       // Halt PICC
+    mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
+}*/
+/*long now = millis();
+  if (now - lastMsg > 2000) {
+    lastMsg = now;
+    ++value;
+    snprintf (msg, 50, wifi.macAddress().c_str(), value);
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    client.publish("esp/", msg);
+    
+  }*/
+/* char JSONMessage[] = "{\"macAddress\":\"5G-67-NJ-L51\",\"uuid\":\"bfc8b00b-7de7-4ce0-8719-1d63d2773b04\",\"createdAt\":1556232469976,\"title\":\"Test #2\"}";
+  StaticJsonDocument <200> doc;
+
+  DeserializationError error = deserializeJson(doc, JSONMessage);
+
+  // Test if parsing succeeds.
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return;
+  }
+   String mac = wifi.macAddress();
+	  String macAddress = doc["macAddress"];
+  if(mac == macAddress){
+    uuid == doc["uuid"];
+
+  }
+  else
+  {
+    Serial.println("mac's is not equals");
+    Serial.println(mac);
+    Serial.println(macAddress);
+  }*/
