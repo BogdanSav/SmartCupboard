@@ -16,8 +16,8 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "S16";
-const char* password = "12345678";
+const char* ssid = "WR-Sydor5";
+const char* password = "IRENA1978";
 const char* mqtt_server = "stag.track-debts.com";
 
 WiFiClient espClient;
@@ -54,6 +54,9 @@ void setup_wifi() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
+
+
 void writeString(char add,String data)
 {
   int _size = data.length();
@@ -221,12 +224,12 @@ void reconnect() {
 
 void sendData()
 {
-  String tag1 = "";
-  String tag2 = "";
-  String tag3 = "";
+  String tag1 = "464648686";
+  String tag2 = "233586699";
+  String tag3 = "225484899";
 
   String path = "esp/"+mac+"/event";
-  String message  = "{\"deviceId\":\"esp\",\"readers\":\"[\"items\":[\"rfid\":\"A\"],\"readerId\" :\" 1 \",\"items\":[\"rfid\":\"B\"],\"readerId\" :\" 2 \" ]\"}";
+  String message  = "{\"deviceId\":\"esp\",\"readers\":\"[\"items\":[\"rfid\":\""+tag1+"\"],\"readerId\" :\" 1 \",\"items\":[\"rfid\":\""+tag2+"\"],\"readerId\" :\" 2 \" ]\"}";
   client.publish(path.c_str(),message.c_str());
 
 }
@@ -270,8 +273,8 @@ void connect(){
 void setup() {
   
   Serial.flush();
-  Serial.begin(9600);
-  softSerial.begin(9600);
+  Serial.begin(115200);
+  softSerial.begin(115200);
   rx_counter = 0; // init counter
   
   // commit 512 bytes of ESP8266 flash (for "EEPROM" emulation)
@@ -283,7 +286,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server,1883);
   client.setCallback(callback);
-   while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U
+   //while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U
    Serial.println("Try some rfid tags");
 }
 
@@ -293,6 +296,6 @@ void loop() {
 
 connect();
 sendData();
-// regist();
+regist();
 //readCard();
 }
