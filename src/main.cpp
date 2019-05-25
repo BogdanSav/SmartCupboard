@@ -152,7 +152,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   return a;
 } 
 
-void readCard()
+/*void readCard()
 {
  /* if (RFIDtags.available()>0)
   {
@@ -162,7 +162,7 @@ void readCard()
     {
       Serial.println(tagId);
     }
-  }*/
+  }
   
   if (softSerial.available() > 0) {
     rx_data[rx_counter] = softSerial.read();
@@ -194,7 +194,7 @@ void readCard()
   }
  
 
-}
+}*/
 
 void reconnect() {
   
@@ -224,12 +224,37 @@ void reconnect() {
 
 void sendData()
 {
-  String tag1 = "464648686";
+ StaticJsonDocument<900> doc;
+   String tag1 = "464648686";
   String tag2 = "233586699";
   String tag3 = "225484899";
+String Jsondoc;
+doc["deviceId"] = "LUCKY-7";
+JsonArray readers = doc.createNestedArray("readers");
 
-  String path = "esp/"+mac+"/event";
-  String message  = "{\"deviceId\":\"esp\",\"readers\":\"[\"items\":[\"rfid\":\""+tag1+"\"],\"readerId\" :\" 1 \",\"items\":[\"rfid\":\""+tag2+"\"],\"readerId\" :\" 2 \" ]\"}";
+
+JsonObject readerFirst = readers.createNestedObject();
+
+JsonArray firstItemArray = readerFirst.createNestedArray("items");
+JsonObject innerFirstItem = firstItemArray.createNestedObject();
+innerFirstItem["rfid"] = "A";
+readerFirst["readerId"] = "1";
+
+JsonObject readerSecond = readers.createNestedObject();
+
+JsonArray secondItemArray = readerSecond.createNestedArray("items");
+JsonObject innerSecondaryItem = secondItemArray.createNestedObject();
+innerSecondaryItem["rfid"] = "B";
+readerSecond["readerId"] = "2";
+serializeJson(doc,Jsondoc);
+Serial.println(Jsondoc);
+ 
+
+  String path = "esp/LUCKY-7/event";
+ 
+  
+   String message  = Jsondoc ;// " { \"deviceId\": \"LUCKY-7\",\"readers\": [\"items\": [],\"readerId\": \"1\"},{\"items\": [],\"readerId\": \"2\"}]}";
+ 
   client.publish(path.c_str(),message.c_str());
 
 }
@@ -269,13 +294,17 @@ void connect(){
  
 
  }
-
+Ticker data(sendData,1000,1);
+Ticker registration(regist,1000,1);
 void setup() {
   
-  Serial.flush();
-  Serial.begin(115200);
-  softSerial.begin(115200);
+ // Serial.flush();
+ softSerial.begin(9600);
+  Serial.begin(9600);
+ 
   rx_counter = 0; // init counter
+  data.start();
+  registration.start();
   
   // commit 512 bytes of ESP8266 flash (for "EEPROM" emulation)
   // this step actually loads the content (512 bytes) of flash into 
@@ -295,7 +324,8 @@ void setup() {
 void loop() {
 
 connect();
-sendData();
-regist();
+data.update();
+registration.update();
+//regist();
 //readCard();
 }
