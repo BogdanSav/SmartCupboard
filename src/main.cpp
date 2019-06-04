@@ -9,9 +9,9 @@
 
 // Update these with values suitable for your network.
 
-const char *ssid = "WR-Sydor5";
-const char *password = "IRENA1978";
-const char *mqtt_server = "stag.track-debts.com";
+const char* ssid = "Lab_101" ;
+const char* password = "LaB_1010";
+const char* mqtt_server = "smart-cupboard.kolegran.com";
 
 WiFiClient espClient;
 ESP8266WiFiClass wifi;
@@ -188,6 +188,7 @@ void sendData()
 
 
   JsonObject readerThird = readers.createNestedObject();
+  
   JsonArray thirdItemArray = readerThird.createNestedArray("items");
   JsonObject innerThirdItem = thirdItemArray.createNestedObject();
   innerThirdItem["rfid"] = "N45651212E";
@@ -241,18 +242,18 @@ void connect()
   }
   client.loop();
 }
-Ticker data(sendData, 1000, 1);
-Ticker registration(regist, 1000, 1);
+Ticker data(sendData, 20000, 3);
+//Ticker registration(regist, 1000, 1);
 
 void setup()
 {
 
-  // Serial.flush();
+  Serial.flush();
   softSerial.begin(9600);
   Serial.begin(9600);
 
   data.start();
-  registration.start();
+ // registration.start();
 
   // commit 512 bytes of ESP8266 flash (for "EEPROM" emulation)
   // this step actually loads the content (512 bytes) of flash into
