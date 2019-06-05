@@ -9,8 +9,8 @@
 
 // Update these with values suitable for your network.
 
-const char *ssid = "Ne_lezb";
-const char *password = "76160976";
+const char *ssid = "";
+const char *password = "";
 const char *mqtt_server = "smart-cupboard.kolegran.com";
 
 WiFiClient espClient;
