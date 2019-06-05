@@ -2,16 +2,16 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <SoftwareSerial.h>
-#include <Ticker.h>
+#include <Timer.h>
 
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
 // Update these with values suitable for your network.
 
-const char* ssid = "Lab_101" ;
-const char* password = "LaB_1010";
-const char* mqtt_server = "smart-cupboard.kolegran.com";
+const char *ssid = "";
+const char *password = "";
+const char *mqtt_server = "smart-cupboard.kolegran.com";
 
 WiFiClient espClient;
 ESP8266WiFiClass wifi;
@@ -21,6 +21,7 @@ SoftwareSerial softSerial(13, 15);
 uint addr = 0;
 String uuid;
 String mac = wifi.macAddress();
+Timer t;
 
 void setup_wifi()
 {
@@ -113,106 +114,111 @@ void callback(char *topic, byte *payload, unsigned int length)
       Serial.println(macAddress);
       Serial.println(uuid);
       writeString(addr, uuid);
-
-      // replace values in byte-array cache with modified data
-      // no changes made to flash, all in local byte-array cache
-
-      // actually write the content of byte-array cache to
-      // hardware flash.  flash write occurs if and only if one or more byte
-      // in byte-array cache has been changed, but if so, ALL 512 bytes are
-      // written to flash
       Serial.println("uuid for this device - " + String(uuid));
     }
   }
 
   Serial.println();
-
-  // Switch on the LED if an 1 was received as first character
-
-  // Switch on the LED if an 1 was received as first character
 }
 
 void reconnect()
 {
 
-  // Loop until we're reconnected
   while (!client.connected())
   {
     Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
-    // Attempt to connect
     if (client.connect(clientId.c_str()))
     {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      // client.publish("esp/","2");
-      // ... and resubscribe
-      //client.subscribe("esp/");
+      String successChannel = "esp/success";
+      String errorChannel = "esp/error";
+
+      client.subscribe(successChannel.c_str());
+      client.subscribe(errorChannel.c_str());
     }
     else
     {
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
+
       delay(5000);
     }
   }
 }
 
+
+String readFirstItem() {
+  String itemValue = "INSERT_REAL_DATA_1";
+
+  //INSERT HERE LOGIC FOR READ ITEM
+  return itemValue;
+}
+
+String readSecondItem() {
+  String itemValue = "INSERT_REAL_DATA_2";
+
+  //INSERT HERE LOGIC FOR READ ITEM
+  return itemValue;
+}
+
+String readThirdItem() {
+  String itemValue = "INSERT_REAL_DATA_3";
+
+  //INSERT HERE LOGIC FOR READ ITEM
+  return itemValue;
+}
+
+
 void sendData()
 {
+
   StaticJsonDocument<900> doc;
-  
   String Jsondoc;
   doc["deviceId"] = "80:8D:8A:8E:BE:88";
   JsonArray readers = doc.createNestedArray("readers");
 
-
   JsonObject readerFirst = readers.createNestedObject();
-
+  readerFirst["readerId"] = "RC-522-1";
   JsonArray firstItemArray = readerFirst.createNestedArray("items");
   JsonObject innerFirstItem = firstItemArray.createNestedObject();
-  innerFirstItem["rfid"] = "A00152045B";
-  readerFirst["readerId"] =  "RC-522-1";
 
   JsonObject readerSecond = readers.createNestedObject();
-
+  readerSecond["readerId"] = "RC-522-2";
   JsonArray secondItemArray = readerSecond.createNestedArray("items");
   JsonObject innerSecondaryItem = secondItemArray.createNestedObject();
-  innerSecondaryItem["rfid"] = "EB2561739S";
-  readerSecond["readerId"] = "RC-522-2";
-
-
 
   JsonObject readerThird = readers.createNestedObject();
-  
+  readerThird["readerId"] = "RC-522-3";
   JsonArray thirdItemArray = readerThird.createNestedArray("items");
   JsonObject innerThirdItem = thirdItemArray.createNestedObject();
-  innerThirdItem["rfid"] = "N45651212E";
-  readerThird["readerId"] = "RC-522-3";
 
-  //serializeJson(doc,Jsondoc);
+  boolean debugMode = true;      //USE THIS VALUE FOR DEBUG WITH FAKE DATA
+  if (debugMode) {
+    innerFirstItem["rfid"] = "A00152045B";
+    innerSecondaryItem["rfid"] = "EB2561739S";
+    innerThirdItem["rfid"] = "N45651212E";
+  }
+  else {
+    innerFirstItem["rfid"] = readFirstItem();
+    innerSecondaryItem["rfid"] = readSecondItem();
+    innerThirdItem["rfid"] = readThirdItem();
+  }
+
+  serializeJson(doc, Jsondoc);
+  Serial.println("---------------------------");
   Serial.println(Jsondoc);
-  
+  Serial.println("---------------------------");
 
-    String path = "esp/80:8D:8A:8E:BE:88/event";
-  
-    
-    String message  = "[{\"deviceId\":\"80:8D:8A:8E:BE:88\",\"readers\": [\"items\": [{\"rfid\":\"A00152045B\"}],{\"readerId\": \"RC-522-1\"},{\"items\": [{\"rfid\":\"A00152045B\"}],{\"readerId\": \"RC-522-2\"}]}]";
-  
-    client.publish(path.c_str(),message.c_str());
-    client.disconnect();
+  String path = "esp/80:8D:8A:8E:BE:88/event";
+
+  client.publish(path.c_str(), Jsondoc.c_str());
 }
 
 void regist()
 {
-
-  // read bytes (i.e. sizeof(data) from "EEPROM"),
-  // in reality, reads from byte-array cache
-  // cast bytes into structure called data
   String uuid = read_String(addr);
 
   Serial.print("UUID is: ");
@@ -240,10 +246,7 @@ void connect()
   {
     reconnect();
   }
-  client.loop();
 }
-Ticker data(sendData, 20000, 3);
-//Ticker registration(regist, 1000, 1);
 
 void setup()
 {
@@ -252,24 +255,19 @@ void setup()
   softSerial.begin(9600);
   Serial.begin(9600);
 
-  data.start();
- // registration.start();
-
-  // commit 512 bytes of ESP8266 flash (for "EEPROM" emulation)
-  // this step actually loads the content (512 bytes) of flash into
-  // a 512-byte-array cache in RAM
   EEPROM.begin(512);
+
+  t.every(5000, connect);
+  t.every(10000, sendData);
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-  //while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U
   Serial.println("Try some rfid tags");
 }
 
 void loop()
 {
-
-  connect();
-  data.update();
+  t.update();
+  client.loop();
 }
