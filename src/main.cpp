@@ -9,19 +9,26 @@
 
 // Update these with values suitable for your network.
 
-const char *ssid = "";
-const char *password = "";
+const char *ssid = "S16";
+const char *password = "12345678";
 const char *mqtt_server = "smart-cupboard.kolegran.com";
 
 WiFiClient espClient;
 ESP8266WiFiClass wifi;
 PubSubClient client(espClient);
-SoftwareSerial softSerial(13, 15);
+SoftwareSerial sser(13, 15);
 
 uint addr = 0;
 String uuid;
 String mac = wifi.macAddress();
 Timer t;
+int input;
+int newCard[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+String tag;
+
+byte hi = HIGH;
+byte lo = LOW;
 
 void setup_wifi()
 {
@@ -149,31 +156,48 @@ void reconnect()
   }
 }
 
-
-String readFirstItem() {
+String readFirstItem()
+{
   String itemValue = "INSERT_REAL_DATA_1";
 
   //INSERT HERE LOGIC FOR READ ITEM
   return itemValue;
 }
 
-String readSecondItem() {
+String readSecondItem()
+{
   String itemValue = "INSERT_REAL_DATA_2";
 
   //INSERT HERE LOGIC FOR READ ITEM
   return itemValue;
 }
 
-String readThirdItem() {
+String readThirdItem()
+{
   String itemValue = "INSERT_REAL_DATA_3";
 
   //INSERT HERE LOGIC FOR READ ITEM
   return itemValue;
 }
 
-
 void sendData()
 {
+   delay(200);
+    Serial.println("In read card");
+    if (sser.available() > 0)
+    {
+      for(int i=0;i < 14;i++) {
+          newCard[i]=sser.read();
+          tag+= newCard[i];
+      }
+      if((newCard[0]==2)&&(newCard[13]==3))
+      {
+         Serial.println("1 tag");
+          Serial.println(tag);
+          Serial.println();
+      }
+       
+    }
 
   StaticJsonDocument<900> doc;
   String Jsondoc;
@@ -181,31 +205,39 @@ void sendData()
   JsonArray readers = doc.createNestedArray("readers");
 
   JsonObject readerFirst = readers.createNestedObject();
-  readerFirst["readerId"] = "RC-522-1";
+
   JsonArray firstItemArray = readerFirst.createNestedArray("items");
-  JsonObject innerFirstItem = firstItemArray.createNestedObject();
 
-  JsonObject readerSecond = readers.createNestedObject();
-  readerSecond["readerId"] = "RC-522-2";
+  readerFirst["readerId"] = "RC-522-1";
+
+  /*  JsonObject readerSecond = readers.createNestedObject();
+
   JsonArray secondItemArray = readerSecond.createNestedArray("items");
-  JsonObject innerSecondaryItem = secondItemArray.createNestedObject();
-
+  
+    readerSecond["readerId"] = "RC-522-2";
   JsonObject readerThird = readers.createNestedObject();
-  readerThird["readerId"] = "RC-522-3";
+  
   JsonArray thirdItemArray = readerThird.createNestedArray("items");
-  JsonObject innerThirdItem = thirdItemArray.createNestedObject();
 
-  boolean debugMode = true;      //USE THIS VALUE FOR DEBUG WITH FAKE DATA
-  if (debugMode) {
-    innerFirstItem["rfid"] = "A00152045B";
-    innerSecondaryItem["rfid"] = "EB2561739S";
-    innerThirdItem["rfid"] = "N45651212E";
+  readerThird["readerId"] = "RC-522-3";*/
+  boolean debugMode = false; //USE THIS VALUE FOR DEBUG WITH FAKE DATA
+  if (tag!="-1"&&tag!="0")
+  {
+    /* JsonObject innerSecondaryItem = secondItemArray.createNestedObject();
+    JsonObject innerThirdItem = thirdItemArray.createNestedObject();*/
+    if((newCard[0]==2)&&(newCard[13]==3)){
+    JsonObject innerFirstItem = firstItemArray.createNestedObject();
+    innerFirstItem["rfid"] = tag;}
+    // innerSecondaryItem["rfid"] = "EB2561739S";
+    // innerThirdItem["rfid"] = "N45651212E";
+    tag="";
   }
-  else {
-    innerFirstItem["rfid"] = readFirstItem();
-    innerSecondaryItem["rfid"] = readSecondItem();
-    innerThirdItem["rfid"] = readThirdItem();
-  }
+  // else {
+
+  //   // innerFirstItem["rfid"] = readFirstItem();
+  //   // innerSecondaryItem["rfid"] = readSecondItem();
+  //   // innerThirdItem["rfid"] = readThirdItem();
+  // }
 
   serializeJson(doc, Jsondoc);
   Serial.println("---------------------------");
@@ -252,13 +284,13 @@ void setup()
 {
 
   Serial.flush();
-  softSerial.begin(9600);
+  sser.begin(9600);
   Serial.begin(9600);
 
   EEPROM.begin(512);
 
   t.every(5000, connect);
-  t.every(10000, sendData);
+  t.every(2000, sendData);
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
